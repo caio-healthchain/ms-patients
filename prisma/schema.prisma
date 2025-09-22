@@ -1,0 +1,353 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Identificação
+  fullName  String
+  cpf       String   @unique
+  rg        String
+  birthDate DateTime
+  gender    Gender
+
+  // Contato
+  phone   String
+  email   String
+  address String
+
+  // Atendimento
+  medicalRecordNumber String   @unique
+  admissionDate       DateTime
+  roomNumber          String
+  responsibleDoctor   String
+  insurancePlan       String
+
+  // Plano de Saúde
+  insuranceNumber       String
+  insuranceValidity     DateTime
+  accommodationType     AccommodationType
+  currentAccommodation  AccommodationType
+  accommodationStatus   AccommodationStatus
+  observations          String?
+
+  // Status
+  status           PatientStatus
+  validationStatus ValidationStatus
+
+  // Relacionamentos
+  procedures    Procedure[]
+  billingItems  BillingItem[]
+  auditLogs     AuditLog[]
+  documents     Document[]
+
+  // Índices
+  @@index([cpf])
+  @@index([medicalRecordNumber])
+  @@index([roomNumber])
+  @@index([insurancePlan])
+  @@index([status])
+  @@index([validationStatus])
+  @@index([admissionDate])
+  @@index([responsibleDoctor])
+  @@map("patients")
+}
+
+model Procedure {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Identificação
+  code        String
+  description String
+  patientId   String
+
+  // Porte
+  suggestedPort   Int
+  currentPort     Int
+  portDivergence  Boolean @default(false)
+
+  // Status e Validação
+  status           ProcedureStatus
+  validationStatus ValidationStatus
+  riskLevel        RiskLevel
+
+  // Auditoria
+  lastAuditDate DateTime?
+  auditorId     String?
+  auditNotes    String?
+
+  // Metadados
+  scheduledDate     DateTime?
+  completedDate     DateTime?
+  estimatedDuration Int? // em minutos
+  actualDuration    Int? // em minutos
+
+  // Relacionamentos
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  billingItems BillingItem[]
+  auditLogs    AuditLog[]
+
+  // Índices
+  @@index([code])
+  @@index([patientId])
+  @@index([status])
+  @@index([validationStatus])
+  @@index([riskLevel])
+  @@index([scheduledDate])
+  @@index([portDivergence])
+  @@map("procedures")
+}
+
+model BillingItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Identificação
+  patientId String
+  procedureId String?
+
+  // Item
+  code        String
+  description String
+  category    BillingCategory
+
+  // Valores
+  unitPrice  Decimal @db.Decimal(10, 2)
+  quantity   Int
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  // Porte (para procedimentos)
+  port Int?
+
+  // Cobertura
+  coverageType CoverageType
+  riskLevel    RiskLevel
+
+  // Solicitação
+  requesterId   String
+  requesterName String
+  requestDate   DateTime
+
+  // Status
+  status           BillingStatus
+  validationStatus ValidationStatus
+
+  // Auditoria
+  auditNotes     String?
+  rejectionReason String?
+
+  // Relacionamentos
+  patient   Patient    @relation(fields: [patientId], references: [id])
+  procedure Procedure? @relation(fields: [procedureId], references: [id])
+  auditLogs AuditLog[]
+
+  // Índices
+  @@index([patientId])
+  @@index([procedureId])
+  @@index([code])
+  @@index([category])
+  @@index([status])
+  @@index([validationStatus])
+  @@index([requestDate])
+  @@map("billing_items")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Identificação
+  entityType EntityType
+  entityId   String
+
+  // Ação
+  action      AuditAction
+  description String
+
+  // Usuário
+  userId   String
+  userName String
+  userRole String
+
+  // Dados
+  oldData Json?
+  newData Json?
+  changes Json?
+
+  // Contexto
+  ipAddress String
+  userAgent String
+  sessionId String
+
+  // Validação
+  validationStatus ValidationStatus?
+  justification    String?
+
+  // Metadados
+  metadata Json?
+
+  // Relacionamentos opcionais
+  patientId   String?
+  procedureId String?
+  billingId   String?
+
+  patient     Patient?     @relation(fields: [patientId], references: [id])
+  procedure   Procedure?   @relation(fields: [procedureId], references: [id])
+  billingItem BillingItem? @relation(fields: [billingId], references: [id])
+
+  // Índices
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([validationStatus])
+  @@map("audit_logs")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Identificação
+  patientId String
+  filename  String
+  originalName String
+  mimeType  String
+  size      Int
+
+  // Categorização
+  category    DocumentCategory
+  description String?
+
+  // Armazenamento (Azure Blob Storage)
+  blobUrl     String
+  containerName String
+  blobName    String
+
+  // Metadados
+  uploadedBy   String
+  uploadedByName String
+  metadata     Json?
+
+  // Relacionamentos
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  // Índices
+  @@index([patientId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("documents")
+}
+
+// Enums
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AccommodationType {
+  APARTMENT
+  SHARED
+}
+
+enum AccommodationStatus {
+  CORRECT
+  INCORRECT
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  TRANSFERRED
+  DISCHARGED
+}
+
+enum ValidationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  UNDER_REVIEW
+}
+
+enum ProcedureStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  PENDING_APPROVAL
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum BillingCategory {
+  PROCEDURE
+  MATERIAL
+  MEDICATION
+  EXAM
+  ACCOMMODATION
+  OTHER
+}
+
+enum CoverageType {
+  INCLUDED
+  EXTRA
+  BLOCKED
+}
+
+enum BillingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BILLED
+}
+
+enum EntityType {
+  PATIENT
+  PROCEDURE
+  BILLING
+  MATERIAL
+  USER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  APPROVE
+  REJECT
+}
+
+enum DocumentCategory {
+  EXAM
+  PRESCRIPTION
+  REPORT
+  IMAGE
+  OTHER
+}
+
