@@ -2,17 +2,18 @@
   "name": "@lazarus/ms-patients",
   "version": "1.0.0",
   "description": "Microsserviço de Gerenciamento de Pacientes",
-  "main": "dist/index.js",
+  "main": "dist/index.ts",
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "build": "nodemon",
+    "start": "node dist/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prestart": "npm run dev"
   },
   "dependencies": {
     "@azure/service-bus": "^7.9.5",

@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { PatientReadModel, PatientDocument, CreatePatientReadModel } from '../models/patient.model';
 import { prisma } from '../config/database';
-import { cacheUtils } from '../config/database';
+//import { cacheUtils } from '../config/database';
 import { logger } from '../config/logger';
 import { 
   Patient,
@@ -49,7 +49,7 @@ export class PatientRepository {
       await this.syncToReadDatabase(patient);
 
       // Clear related cache
-      await this.clearPatientCache(patient.id);
+      //await this.clearPatientCache(patient.id);
 
       logger.info('Patient created successfully:', { patientId: patient.id });
       return this.mapPrismaToPatient(patient);
@@ -88,7 +88,7 @@ export class PatientRepository {
       await this.syncToReadDatabase(patient);
 
       // Clear cache
-      await this.clearPatientCache(id);
+     // await this.clearPatientCache(id);
 
       logger.info('Patient updated successfully:', { patientId: id });
       return this.mapPrismaToPatient(patient);
@@ -107,7 +107,7 @@ export class PatientRepository {
       // Soft delete in read database
 
       // Clear cache
-      await this.clearPatientCache(id);
+      //await this.clearPatientCache(id);
 
       logger.info('Patient deleted successfully:', { patientId: id });
     } catch (error) {
@@ -120,11 +120,11 @@ export class PatientRepository {
   async findById(id: string): Promise<Patient | null> {
     try {
       // Try cache first
-      const cacheKey = `${this.CACHE_PREFIX}${id}`;
-      const cached = await cacheUtils.get<Patient>(cacheKey);
-      if (cached) {
-        return cached;
-      }
+    //  const cacheKey = `${this.CACHE_PREFIX}${id}`;
+     // const cached = await cacheUtils.get<Patient>(cacheKey);
+     // if (cached) {
+     //   return cached;
+     // }
 
       // Query read database
       const patient = await PatientReadModel.findOne({ id }).lean();
@@ -135,7 +135,7 @@ export class PatientRepository {
       const result = this.mapMongoToPatient(patient);
 
       // Cache the result
-      await cacheUtils.set(cacheKey, result, this.CACHE_TTL);
+    //  await cacheUtils.set(cacheKey, result, this.CACHE_TTL);
 
       return result;
     } catch (error) {
@@ -146,11 +146,11 @@ export class PatientRepository {
 
   async findByCpf(cpf: string): Promise<Patient | null> {
     try {
-      const cacheKey = `${this.CACHE_PREFIX}cpf:${cpf}`;
-      const cached = await cacheUtils.get<Patient>(cacheKey);
-      if (cached) {
-        return cached;
-      }
+    //  const cacheKey = `${this.CACHE_PREFIX}cpf:${cpf}`;
+     // const cached = await cacheUtils.get<Patient>(cacheKey);
+   //   if (cached) {
+    //    return cached;
+    //  }
 
       const patient = await PatientReadModel.findOne({ cpf }).lean();
       if (!patient) {
@@ -158,7 +158,7 @@ export class PatientRepository {
       }
 
       const result = this.mapMongoToPatient(patient);
-      await cacheUtils.set(cacheKey, result, this.CACHE_TTL);
+      //await cacheUtils.set(cacheKey, result, this.CACHE_TTL);
 
       return result;
     } catch (error) {
@@ -169,11 +169,11 @@ export class PatientRepository {
 
   async findByMedicalRecord(medicalRecordNumber: string): Promise<Patient | null> {
     try {
-      const cacheKey = `${this.CACHE_PREFIX}record:${medicalRecordNumber}`;
-      const cached = await cacheUtils.get<Patient>(cacheKey);
-      if (cached) {
-        return cached;
-      }
+      //const cacheKey = `${this.CACHE_PREFIX}record:${medicalRecordNumber}`;
+     // const cached = await cacheUtils.get<Patient>(cacheKey);
+      //if (cached) {
+      //  return cached;
+     // }
 
       const patient = await PatientReadModel.findOne({ medicalRecordNumber }).lean();
       if (!patient) {
@@ -181,7 +181,7 @@ export class PatientRepository {
       }
 
       const result = this.mapMongoToPatient(patient);
-      await cacheUtils.set(cacheKey, result, this.CACHE_TTL);
+      //await cacheUtils.set(cacheKey, result, this.CACHE_TTL);
 
       return result;
     } catch (error) {
@@ -195,11 +195,11 @@ export class PatientRepository {
     pagination: PaginationParams
   ): Promise<PaginatedResponse<Patient>> {
     try {
-      const cacheKey = `${this.CACHE_PREFIX}search:${JSON.stringify({ filters, pagination })}`;
-      const cached = await cacheUtils.get<PaginatedResponse<Patient>>(cacheKey);
-      if (cached) {
-        return cached;
-      }
+      //const cacheKey = `${this.CACHE_PREFIX}search:${JSON.stringify({ filters, pagination })}`;
+      //const cached = await cacheUtils.get<PaginatedResponse<Patient>>(cacheKey);
+     // if (cached) {
+     //   return cached;
+      //}
 
       // Build query
       const query: any = {};
@@ -271,7 +271,7 @@ export class PatientRepository {
       };
 
       // Cache for shorter time due to frequent updates
-      await cacheUtils.set(cacheKey, result, 300); // 5 minutes
+     // await cacheUtils.set(cacheKey, result, 300); // 5 minutes
 
       return result;
     } catch (error) {
@@ -330,18 +330,18 @@ export class PatientRepository {
   }
 
   // UTILITY METHODS
-  private async clearPatientCache(patientId: string): Promise<void> {
-    try {
-      await Promise.all([
-        cacheUtils.del(`${this.CACHE_PREFIX}${patientId}`),
-        cacheUtils.clearPattern(`${this.CACHE_PREFIX}cpf:*`),
-        cacheUtils.clearPattern(`${this.CACHE_PREFIX}record:*`),
-        cacheUtils.clearPattern(`${this.CACHE_PREFIX}search:*`)
-      ]);
-    } catch (error) {
-      logger.error('Failed to clear patient cache:', error);
-    }
-  }
+  //private async clearPatientCache(patientId: string): Promise<void> {
+  //  try {
+   //   await Promise.all([
+        //cacheUtils.del(`${this.CACHE_PREFIX}${patientId}`),
+       // cacheUtils.clearPattern(`${this.CACHE_PREFIX}cpf:*`),
+      //  cacheUtils.clearPattern(`${this.CACHE_PREFIX}record:*`),
+      //  cacheUtils.clearPattern(`${this.CACHE_PREFIX}search:*`)
+    //  ]);
+  //  } catch (error) {
+  //    logger.error('Failed to clear patient cache:', error);
+  //  }
+ // }
 
   private mapPrismaToPatient(prismaPatient: any): Patient {
     return {

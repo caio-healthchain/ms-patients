@@ -142,12 +142,12 @@ const PatientSchema = new Schema<PatientDocument>({
   },
   accommodationType: { 
     type: String, 
-    enum: ['apartment', 'shared'], 
+    enum: ['APARTMENT', 'shared'], 
     required: true 
   },
   currentAccommodation: { 
     type: String, 
-    enum: ['apartment', 'shared'], 
+    enum: ['APARTMENT', 'shared'], 
     required: true 
   },
   accommodationStatus: { 

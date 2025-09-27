@@ -105,7 +105,7 @@ export const connectDatabases = async (): Promise<void> => {
     await connectMongoDB();
 
     // Connect Redis
-    await connectRedis();
+    //await connectRedis();
 
     logger.info('All databases connected successfully');
   } catch (error) {
