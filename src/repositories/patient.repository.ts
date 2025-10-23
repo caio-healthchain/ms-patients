@@ -104,7 +104,9 @@ export class PatientRepository {
         where: { id },
       });
 
-      // Soft delete in read database
+      // Delete from read database (MongoDB)
+      await PatientReadModel.deleteOne({ id });
+      logger.info('Patient deleted from MongoDB:', { patientId: id });
 
       // Clear cache
       //await this.clearPatientCache(id);
