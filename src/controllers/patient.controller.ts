@@ -129,5 +129,38 @@ export class PatientController {
     const result = await this.patientService.validatePatient(id, 'validated', req.user?.userId || '');
     res.json(result);
   });
+
+  // Get patient by insurance number (for XML import)
+  getPatientByInsuranceNumber = asyncHandler(async (req: Request, res: Response) => {
+    const { insuranceNumber } = req.params;
+    
+    if (!insuranceNumber) {
+      throw new AppError('Insurance number is required', 400);
+    }
+
+    logger.info('Getting patient by insurance number', { insuranceNumber });
+
+    const result = await this.patientService.getPatientByInsuranceNumber(insuranceNumber);
+    
+    if (!result) {
+      res.status(404).json({ 
+        success: false, 
+        message: 'Patient not found with this insurance number' 
+      });
+      return;
+    }
+
+    res.json(result);
+  });
+
+  // Create patient from XML data (for XML import)
+  createPatientFromXml = asyncHandler(async (req: Request, res: Response) => {
+    logger.info('Creating patient from XML', { data: req.body });
+
+    const xmlData = req.body;
+    const result = await this.patientService.createPatientFromXml(xmlData);
+
+    res.status(201).json(result);
+  });
 }
 

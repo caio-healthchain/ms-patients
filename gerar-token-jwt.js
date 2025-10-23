@@ -20,7 +20,7 @@ const payload = {
 };
 
 // Secret usado no serviço (mesmo do .env)
-const secret = 'test-jwt-secret-key-for-development';
+const secret = 'your-super-secret-jwt-key-change-this-in-production';
 
 // Gerar o token
 const token = jwt.sign(payload, secret);

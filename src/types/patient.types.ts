@@ -18,6 +18,7 @@ export interface CreatePatientRequest {
   insuranceNumber?: string;
   insuranceValidity?: Date | string;
   accommodationType?: string;
+  accommodationStatus?: string;
   allergies?: string[];
   chronicConditions?: string[];
   emergencyContact?: {
@@ -47,6 +48,7 @@ export interface UpdatePatientRequest {
   insuranceNumber?: string;
   insuranceValidity?: Date | string;
   accommodationType?: string;
+  accommodationStatus?: string;
   allergies?: string[];
   chronicConditions?: string[];
   emergencyContact?: {

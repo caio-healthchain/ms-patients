@@ -475,5 +475,71 @@ export class PatientService {
     
     return changes;
   }
+
+  /**
+   * Get patient by insurance number (for XML import)
+   */
+  async getPatientByInsuranceNumber(insuranceNumber: string): Promise<ApiResponse<Patient> | null> {
+    try {
+      const patient = await this.patientRepository.findByInsuranceNumber(insuranceNumber);
+      
+      if (!patient) {
+        return null;
+      }
+
+      return {
+        success: true,
+        data: patient,
+        message: 'Patient found',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      logger.error('Failed to get patient by insurance number:', error);
+      throw new AppError('Failed to retrieve patient', 500);
+    }
+  }
+
+  /**
+   * Create patient from XML data (for XML import)
+   */
+  async createPatientFromXml(xmlData: any): Promise<ApiResponse<Patient>> {
+    try {
+      logger.info('Creating patient from XML data', { xmlData });
+
+      // Map XML data to patient format
+      const patientData: CreatePatientRequest = {
+        firstName: xmlData.nomeBeneficiario?.split(' ')[0] || 'N/A',
+        lastName: xmlData.nomeBeneficiario?.split(' ').slice(1).join(' ') || 'N/A',
+        fullName: xmlData.nomeBeneficiario || 'N/A',
+        cpf: xmlData.cpf || '00000000000',
+        birthDate: xmlData.dataNascimento || new Date().toISOString(),
+        gender: xmlData.sexo === 'F' ? 'FEMALE' : 'MALE', // Map to Gender enum
+        phone: xmlData.telefone || '(00) 00000-0000',
+        email: xmlData.email || 'nao-informado@email.com',
+        address: xmlData.endereco || 'Não informado',
+        insuranceNumber: xmlData.numeroCarteira,
+        insurancePlan: xmlData.plano,
+        accommodationType: 'STANDARD', // Default for XML import
+      };
+
+      // Create patient without validation (XML import)
+      const patient = await this.patientRepository.create(patientData);
+
+      // Publish event
+      await eventBusService.publishPatientCreated(patient);
+
+      logger.info('Patient created from XML:', { patientId: patient.id });
+
+      return {
+        success: true,
+        data: patient,
+        message: 'Patient created from XML successfully',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      logger.error('Failed to create patient from XML:', error);
+      throw new AppError('Failed to create patient from XML', 500);
+    }
+  }
 }
 

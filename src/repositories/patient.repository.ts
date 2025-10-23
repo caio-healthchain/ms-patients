@@ -38,7 +38,7 @@ export class PatientRepository {
           insuranceValidity: data.insuranceValidity ? new Date(data.insuranceValidity) : new Date(),
           accommodationType: data.accommodationType ? data.accommodationType.toUpperCase() as any : undefined,
           currentAccommodation: data.accommodationType ? data.accommodationType.toUpperCase() as any : 'STANDARD',
-          accommodationStatus: 'CORRECT',
+          accommodationStatus: 'OCCUPIED',
           observations: '',
           status: 'ACTIVE',
           validationStatus: 'PENDING'
@@ -397,6 +397,35 @@ export class PatientRepository {
       status: mongoPatient.status,
       validationStatus: mongoPatient.validationStatus
     };
+  }
+
+  /**
+   * Find patient by insurance number (for XML import)
+   */
+  async findByInsuranceNumber(insuranceNumber: string): Promise<Patient | null> {
+    try {
+      // Try MongoDB first (read database)
+      const mongoPatient = await PatientReadModel.findOne({ insuranceNumber }).lean();
+      
+      if (mongoPatient) {
+        return this.mapMongoToPatient(mongoPatient);
+      }
+
+      // Fallback to PostgreSQL
+      const patient = await prisma.patient.findFirst({
+        where: { insuranceNumber }
+      });
+
+      if (patient) {
+        // Sync to read database
+        await this.syncToReadDatabase(patient);
+      }
+
+      return patient as Patient;
+    } catch (error) {
+      logger.error('Error finding patient by insurance number:', error);
+      throw error;
+    }
   }
 }
 

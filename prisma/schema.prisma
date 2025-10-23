@@ -269,11 +269,14 @@ enum Gender {
 enum AccommodationType {
   APARTMENT
   SHARED
+  STANDARD
 }
 
 enum AccommodationStatus {
-  CORRECT
-  INCORRECT
+  OCCUPIED
+  AVAILABLE
+  MAINTENANCE
+  RESERVED
 }
 
 enum PatientStatus {

@@ -316,3 +316,57 @@ router.patch(
 
 export default router;
 
+
+
+/**
+ * @swagger
+ * /api/v1/patients/insurance/{insuranceNumber}:
+ *   get:
+ *     summary: Get patient by insurance number (for XML import)
+ *     tags: [Patients]
+ *     parameters:
+ *       - in: path
+ *         name: insuranceNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Insurance card number
+ *     responses:
+ *       200:
+ *         description: Patient found
+ *       404:
+ *         description: Patient not found
+ */
+// Get patient by insurance number - no auth required for internal services
+router.get(
+  '/insurance/:insuranceNumber',
+  patientController.getPatientByInsuranceNumber
+);
+
+/**
+ * @swagger
+ * /api/v1/patients/from-xml:
+ *   post:
+ *     summary: Create patient from XML data (for XML import)
+ *     tags: [Patients]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               numeroCarteira:
+ *                 type: string
+ *               nomeBeneficiario:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Patient created successfully
+ */
+// Create patient from XML - no auth required for internal services
+router.post(
+  '/from-xml',
+  patientController.createPatientFromXml
+);
+
