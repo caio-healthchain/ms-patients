@@ -11,6 +11,9 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'your-super-secret-jwt-key',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
   
+  // API Key (for external integrations)
+  apiKey: process.env.API_KEY || 'your-api-key-here',
+  
   // Azure PostgreSQL (Write Database)
   postgres: {
     host: process.env.POSTGRES_HOST || 'localhost',

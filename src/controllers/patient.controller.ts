@@ -144,7 +144,7 @@ export class PatientController {
     
     if (!result) {
       res.status(404).json({ 
-        success: false, 
+        status: false, 
         message: 'Patient not found with this insurance number' 
       });
       return;

@@ -18,6 +18,7 @@ import { authMiddleware } from './middleware/auth';
 // Routes
 import patientRoutes from './routes/patient.routes';
 import healthRoutes from './routes/health.routes';
+import guiaRoutes from './routes/guia.routes';
 // import mcpRoutes from './routes/mcp.routes'; // TODO: Implement MCP routes
 
 class PatientService {
@@ -50,7 +51,7 @@ class PatientService {
       origin: '*',
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-API-Key']
     }));
 
     // Rate limiting
@@ -77,11 +78,14 @@ class PatientService {
   }
 
   private initializeRoutes(): void {
-    // Health check (no auth required)
-    this.app.use('/health', healthRoutes);
-    
-    // API routes (auth required)
-    this.app.use('/api/v1/patients', authMiddleware, patientRoutes);
+  // Health check (no auth required)
+  this.app.use('/health', healthRoutes);
+
+  // Patients routes (auth handled per-route: JWT for protected, API Key for internal endpoints)
+  this.app.use('/api/v1/patients', patientRoutes);
+  
+  // Guides (guia) routes (API Key required - já tem middleware aplicado nas rotas)
+  this.app.use('/api/v1/guides', guiaRoutes);
     
     // MCP routes (auth required) - TODO: Implement
     // this.app.use('/mcp', authMiddleware, mcpRoutes);
@@ -102,6 +106,37 @@ class PatientService {
         }
       });
     });
+
+    // Log registered routes for debugging
+    const listRoutes = () => {
+      try {
+        const routes: string[] = [];
+        this.app._router.stack.forEach((middleware: any) => {
+          if (middleware.route) {
+            // routes registered directly on the app
+            const path = middleware.route.path;
+            const methods = Object.keys(middleware.route.methods).join(',').toUpperCase();
+            routes.push(`${methods} ${path}`);
+          } else if (middleware.name === 'router' && middleware.handle && middleware.handle.stack) {
+            // router middleware
+            middleware.handle.stack.forEach((handler: any) => {
+              if (handler.route) {
+                const path = handler.route.path;
+                const methods = Object.keys(handler.route.methods).join(',').toUpperCase();
+                routes.push(`${methods} ${middleware.regexp && middleware.regexp.source ? middleware.regexp.source.replace('^\\','').replace('\\/?(?=\\/|$)','') : ''}${path}`);
+              }
+            });
+          }
+        });
+
+        logger.info('Registered routes:', { routes });
+      } catch (err) {
+        logger.warn('Could not list routes for debugging', { err });
+      }
+    };
+
+    // Call once at startup
+    setImmediate(listRoutes);
   }
 
   private initializeSwagger(): void {

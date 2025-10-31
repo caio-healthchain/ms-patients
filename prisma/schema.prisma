@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -12,254 +9,491 @@ datasource db {
 }
 
 model Patient {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id                   String              @id @default(cuid())
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  deletedAt            DateTime?
+  fullName             String
+  birthDate            DateTime
+  phone                String?
+  email                String?
+  accommodationStatus  AccommodationStatus
+  accommodationType    AccommodationType
+  address              String?
+  admissionDate        DateTime
+  cpf                  String?             @unique
+  currentAccommodation AccommodationType
+  gender               Gender
+  insuranceNumber      String?
+  insurancePlan        String?
+  insuranceValidity    DateTime
+  medicalRecordNumber  String?             @unique
+  observations         String?
+  responsibleDoctor    String?
+  rg                   String?
+  roomNumber           String?
+  status               PatientStatus
+  validationStatus     ValidationStatus
+  auditLogs            AuditLog[]
+  billing_accounts     billing_accounts[]
+  billingItems         BillingItem[]
+  dialogues            dialogues[]
+  documents            Document[]
+  guia                 guia[]
+  procedures           Procedure[]
 
-  // Identificação
-  fullName  String
-  cpf       String   @unique
-  rg        String
-  birthDate DateTime
-  gender    Gender
-
-  // Contato
-  phone   String
-  email   String
-  address String
-
-  // Atendimento
-  medicalRecordNumber String   @unique
-  admissionDate       DateTime
-  roomNumber          String
-  responsibleDoctor   String
-  insurancePlan       String
-
-  // Plano de Saúde
-  insuranceNumber       String
-  insuranceValidity     DateTime
-  accommodationType     AccommodationType
-  currentAccommodation  AccommodationType
-  accommodationStatus   AccommodationStatus
-  observations          String?
-
-  // Status
-  status           PatientStatus
-  validationStatus ValidationStatus
-
-  // Relacionamentos
-  procedures    Procedure[]
-  billingItems  BillingItem[]
-  auditLogs     AuditLog[]
-  documents     Document[]
-
-  // Índices
   @@index([cpf])
   @@index([medicalRecordNumber])
   @@index([roomNumber])
-  @@index([insurancePlan])
   @@index([status])
   @@index([validationStatus])
-  @@index([admissionDate])
-  @@index([responsibleDoctor])
   @@map("patients")
 }
 
 model Procedure {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id                        String          @id @default(cuid())
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  code                      String
+  description               String?
+  patientId                 String?
+  status                    ProcedureStatus
+  estimatedDuration         Int?
+  basePrice                 Decimal         @db.Decimal(10, 2)
+  name                      String
+  requiresAuthorization     Boolean         @default(false)
+  subcategory               String?
+  tags                      String[]
+  isActive                  Boolean         @default(true)
+  category                  String
+  complexity                String
+  suggestedPort             Int
+  actualPort                Int?
+  scheduledDate             DateTime?       @db.Timestamp(6)
+  performedDate             DateTime?       @db.Timestamp(6)
+  duration                  Int?
+  anesthesiaType            AnesthesiaType?
+  preOperativeExams         String[]        @default([])
+  postOperativeInstructions String?
+  complications             String?
+  notes                     String?
+  deletedAt                 DateTime?       @db.Timestamp(6)
+  auditLogs                 AuditLog[]
+  billingItems              BillingItem[]
+  patient                   Patient?        @relation(fields: [patientId], references: [id])
 
-  // Identificação
-  code        String
-  description String
-  patientId   String
-
-  // Porte
-  suggestedPort   Int
-  currentPort     Int
-  portDivergence  Boolean @default(false)
-
-  // Status e Validação
-  status           ProcedureStatus
-  validationStatus ValidationStatus
-  riskLevel        RiskLevel
-
-  // Auditoria
-  lastAuditDate DateTime?
-  auditorId     String?
-  auditNotes    String?
-
-  // Metadados
-  scheduledDate     DateTime?
-  completedDate     DateTime?
-  estimatedDuration Int? // em minutos
-  actualDuration    Int? // em minutos
-
-  // Relacionamentos
-  patient      Patient       @relation(fields: [patientId], references: [id])
-  billingItems BillingItem[]
-  auditLogs    AuditLog[]
-
-  // Índices
   @@index([code])
   @@index([patientId])
   @@index([status])
-  @@index([validationStatus])
-  @@index([riskLevel])
-  @@index([scheduledDate])
-  @@index([portDivergence])
+  @@index([category])
   @@map("procedures")
 }
 
 model BillingItem {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-
-  // Identificação
-  patientId String
-  procedureId String?
-
-  // Item
-  code        String
-  description String
-  category    BillingCategory
-
-  // Valores
-  unitPrice  Decimal @db.Decimal(10, 2)
-  quantity   Int
-  totalPrice Decimal @db.Decimal(10, 2)
-
-  // Porte (para procedimentos)
-  port Int?
-
-  // Cobertura
-  coverageType CoverageType
-  riskLevel    RiskLevel
-
-  // Solicitação
-  requesterId   String
-  requesterName String
-  requestDate   DateTime
-
-  // Status
+  id               String           @id @default(cuid())
+  billingAccountId String
+  patientId        String
+  procedureId      String?
+  description      String
+  quantity         Int              @default(1)
+  unitPrice        Decimal          @db.Decimal(10, 2)
+  totalPrice       Decimal          @db.Decimal(10, 2)
+  discount         Decimal          @default(0) @db.Decimal(10, 2)
   status           BillingStatus
-  validationStatus ValidationStatus
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  billing_accounts billing_accounts @relation(fields: [billingAccountId], references: [id])
+  patient          Patient          @relation(fields: [patientId], references: [id])
+  procedure        Procedure?       @relation(fields: [procedureId], references: [id])
 
-  // Auditoria
-  auditNotes     String?
-  rejectionReason String?
-
-  // Relacionamentos
-  patient   Patient    @relation(fields: [patientId], references: [id])
-  procedure Procedure? @relation(fields: [procedureId], references: [id])
-  auditLogs AuditLog[]
-
-  // Índices
   @@index([patientId])
   @@index([procedureId])
-  @@index([code])
-  @@index([category])
-  @@index([status])
-  @@index([validationStatus])
-  @@index([requestDate])
+  @@index([billingAccountId])
   @@map("billing_items")
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
+  id               String            @id @default(cuid())
+  createdAt        DateTime          @default(now())
+  entityId         String
+  userId           String
+  userName         String
+  userRole         String
+  patientId        String?
+  procedureId      String?
+  newValues        Json?
+  oldValues        Json?
+  billingAccountId String?
+  changes          Json?
+  ipAddress        String?
+  sessionId        String?
+  userAgent        String?
+  entity           AuditLogEntity
+  action           AuditLogAction
+  billing_accounts billing_accounts? @relation(fields: [billingAccountId], references: [id])
+  patient          Patient?          @relation(fields: [patientId], references: [id])
+  procedure        Procedure?        @relation(fields: [procedureId], references: [id])
 
-  // Identificação
-  entityType EntityType
-  entityId   String
-
-  // Ação
-  action      AuditAction
-  description String
-
-  // Usuário
-  userId   String
-  userName String
-  userRole String
-
-  // Dados
-  oldData Json?
-  newData Json?
-  changes Json?
-
-  // Contexto
-  ipAddress String
-  userAgent String
-  sessionId String
-
-  // Validação
-  validationStatus ValidationStatus?
-  justification    String?
-
-  // Metadados
-  metadata Json?
-
-  // Relacionamentos opcionais
-  patientId   String?
-  procedureId String?
-  billingId   String?
-
-  patient     Patient?     @relation(fields: [patientId], references: [id])
-  procedure   Procedure?   @relation(fields: [procedureId], references: [id])
-  billingItem BillingItem? @relation(fields: [billingId], references: [id])
-
-  // Índices
-  @@index([entityType, entityId])
   @@index([action])
   @@index([userId])
   @@index([createdAt])
-  @@index([validationStatus])
+  @@index([entityId])
+  @@index([entity])
+  @@index([patientId])
   @@map("audit_logs")
 }
 
 model Document {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-
-  // Identificação
-  patientId String
-  filename  String
+  id           String           @id @default(cuid())
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  title        String
+  filename     String
   originalName String
-  mimeType  String
-  size      Int
+  mimeType     String
+  size         Int
+  category     DocumentCategory
+  subcategory  String?
+  tags         String[]
+  content      String?
+  summary      String?
+  patientId    String?
+  isProcessed  Boolean          @default(false)
+  isPublic     Boolean          @default(false)
+  patient      Patient?         @relation(fields: [patientId], references: [id])
 
-  // Categorização
-  category    DocumentCategory
-  description String?
-
-  // Armazenamento (Azure Blob Storage)
-  blobUrl     String
-  containerName String
-  blobName    String
-
-  // Metadados
-  uploadedBy   String
-  uploadedByName String
-  metadata     Json?
-
-  // Relacionamentos
-  patient Patient @relation(fields: [patientId], references: [id])
-
-  // Índices
   @@index([patientId])
   @@index([category])
   @@index([createdAt])
   @@map("documents")
 }
 
-// Enums
+model ai_agents {
+  id          String   @id
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  name        String
+  description String?
+  type        String
+  config      Json
+  model       String
+  version     String   @default("1.0")
+  isActive    Boolean  @default(true)
+  isTraining  Boolean  @default(false)
+  tags        String[]
+
+  @@index([isActive])
+  @@index([type])
+}
+
+model billing_accounts {
+  id              String        @id
+  patientId       String
+  accountNumber   String        @unique
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  paidAmount      Decimal       @default(0) @db.Decimal(10, 2)
+  remainingAmount Decimal       @db.Decimal(10, 2)
+  status          BillingStatus
+  dueDate         DateTime
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  audit_logs      AuditLog[]
+  patients        Patient       @relation(fields: [patientId], references: [id])
+  billing_items   BillingItem[]
+
+  @@index([accountNumber])
+  @@index([patientId])
+  @@index([status])
+}
+
+model business_rules {
+  id          String           @id
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime
+  name        String
+  description String?
+  code        String           @unique
+  type        BusinessRuleType
+  status      RuleStatus
+  priority    Int              @default(0)
+  conditions  Json
+  actions     Json
+  version     String           @default("1.0")
+  isActive    Boolean          @default(true)
+  tags        String[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([status])
+  @@index([type])
+}
+
+model dialogues {
+  id         String   @id
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  patientId  String
+  title      String
+  content    String
+  type       String
+  isActive   Boolean  @default(true)
+  isResolved Boolean  @default(false)
+  metadata   Json?
+  tags       String[]
+  patients   Patient  @relation(fields: [patientId], references: [id])
+
+  @@index([isActive])
+  @@index([patientId])
+  @@index([type])
+}
+
+model guia {
+  id                        Int                  @id @default(autoincrement())
+  numeroGuiaPrestador       String               @unique
+  numeroGuiaOperadora       String?
+  numeroCarteira            String?
+  senha                     String?
+  dataAutorizacao           DateTime?
+  dataValidadeSenha         DateTime?
+  atendimentoRN             String?
+  tipoTransacao             String?
+  loteGuia                  String?
+  caraterAtendimento        String?
+  tipoFaturamento           String?
+  dataInicioFaturamento     DateTime?
+  dataFinalFaturamento      DateTime?
+  tipoInternacao            String?
+  regimeInternacao          String?
+  diagnostico               String?
+  indicadorAcidente         String?
+  motivoEncerramento        String?
+  outrasDespesas            Json?
+  valorTotalProcedimentos   Float?
+  valorTotalDiarias         Float?
+  valorTotalTaxasAlugueis   Float?
+  valorTotalMateriais       Float?
+  valorTotalMedicamentos    Float?
+  valorTotalOPME            Float?
+  valorTotalGasesMedicinais Float?
+  valorTotalGeral           Float?
+  observacao                String?
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime
+  patientId                 String?
+  tipoGuia                  String?
+  patients                  Patient?             @relation(fields: [patientId], references: [id])
+  guia_procedimentos        guia_procedimentos[]
+}
+
+model guia_procedimentos {
+  id                    Int     @id @default(autoincrement())
+  sequencialItem        String
+  dataExecucao          String?
+  horaInicial           String?
+  horaFinal             String?
+  codigoTabela          String?
+  codigoProcedimento    String?
+  descricaoProcedimento String?
+  quantidadeExecutada   Int?
+  viaAcesso             String?
+  tecnicaUtilizada      String?
+  reducaoAcrescimo      Float?
+  valorUnitario         Float?
+  valorTotal            Float?
+  nomeProfissional      String?
+  identEquipe           Json?
+  guiaId                Int
+  guia                  guia    @relation(fields: [guiaId], references: [id], onDelete: Cascade)
+
+  @@unique([guiaId, sequencialItem])
+}
+
+model hospital_systems {
+  id          String    @id
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  name        String
+  code        String    @unique
+  description String?
+  endpoint    String
+  apiKey      String?
+  config      Json
+  isActive    Boolean   @default(true)
+  isConnected Boolean   @default(false)
+  lastSync    DateTime?
+  version     String    @default("1.0")
+  tags        String[]
+
+  @@index([code])
+  @@index([isActive])
+}
+
+model tbdomAusenciaCodValidacao {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomCBO {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomCaraterAtendimento {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomCodigoDespesa {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomConselhoProfissional {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomGrauParticipacao {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomIdentificaBeneficiario {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomIndicadorAcidente {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomMotivoEncerramento {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomPorte {
+  codigo             String    @id @db.VarChar(10)
+  procedimento       String    @db.VarChar(500)
+  porte              String    @db.VarChar(10)
+  valorFinalPorte    Decimal?  @db.Decimal(10, 2)
+  custoOperacIndice  Decimal?  @db.Decimal(10, 3)
+  custoOperacRs      Decimal?  @db.Decimal(10, 2)
+  numAuxiliar        Int?      @default(0)
+  porteAnestesico    Int?      @default(0)
+  incidencia         Int?      @default(0)
+  filmesIndice       Decimal?  @db.Decimal(10, 3)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+
+  @@index([codigo])
+  @@index([porte])
+}
+
+model tbdomRegimeInternacao {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomRelacaoTUSS {
+  codigoTabela       String    @id @db.VarChar(10)
+  descricao          String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomTecnicaUtilizada {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomTipoFaturamento {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomTipoInternacao {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomUF {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  sigla              String    @db.VarChar(10)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomUnMedida {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  descricaoDetalhada String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tbdomViaAcesso {
+  codigoTermo        String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  dataFimImplantacao DateTime? @db.Date
+}
+
+model tussProcedimentos {
+  codigoTUSS         String    @id @db.VarChar(10)
+  termo              String    @db.VarChar(500)
+  dataInicioVigencia DateTime? @db.Date
+  dataFimVigencia    DateTime? @db.Date
+  itemSIP            String
+  observacaoTuss     String?
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -267,9 +501,10 @@ enum Gender {
 }
 
 enum AccommodationType {
-  APARTMENT
-  SHARED
   STANDARD
+  PREMIUM
+  VIP
+  ICU
 }
 
 enum AccommodationStatus {
@@ -282,15 +517,14 @@ enum AccommodationStatus {
 enum PatientStatus {
   ACTIVE
   INACTIVE
-  TRANSFERRED
   DISCHARGED
+  TRANSFERRED
 }
 
 enum ValidationStatus {
   PENDING
-  APPROVED
+  VALIDATED
   REJECTED
-  UNDER_REVIEW
 }
 
 enum ProcedureStatus {
@@ -298,47 +532,33 @@ enum ProcedureStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
-  PENDING_APPROVAL
-}
-
-enum RiskLevel {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum BillingCategory {
-  PROCEDURE
-  MATERIAL
-  MEDICATION
-  EXAM
-  ACCOMMODATION
-  OTHER
-}
-
-enum CoverageType {
-  INCLUDED
-  EXTRA
-  BLOCKED
 }
 
 enum BillingStatus {
   PENDING
   APPROVED
   REJECTED
-  BILLED
+  PAID
 }
 
-enum EntityType {
-  PATIENT
-  PROCEDURE
-  BILLING
-  MATERIAL
-  USER
+enum DocumentCategory {
+  MEDICAL_RECORD
+  INSURANCE
+  IDENTIFICATION
+  PROCEDURE_REPORT
+  BILLING_DOCUMENT
+  OTHER
 }
 
-enum AuditAction {
+enum AnesthesiaType {
+  LOCAL
+  REGIONAL
+  GENERAL
+  SEDATION
+  NONE
+}
+
+enum AuditLogAction {
   CREATE
   UPDATE
   DELETE
@@ -347,11 +567,88 @@ enum AuditAction {
   REJECT
 }
 
-enum DocumentCategory {
-  EXAM
-  PRESCRIPTION
-  REPORT
-  IMAGE
-  OTHER
+enum AuditLogEntity {
+  PATIENT
+  PROCEDURE
+  BILLING
+  DOCUMENT
+  USER
 }
 
+enum BusinessRuleType {
+  VALIDATION
+  CALCULATION
+  WORKFLOW
+  NOTIFICATION
+}
+
+enum MaterialRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ORDERED
+  DELIVERED
+  CANCELLED
+}
+
+enum MaterialStatus {
+  REQUESTED
+  APPROVED
+  DELIVERED
+  USED
+  RETURNED
+  EXPIRED
+  REJECTED
+}
+
+enum MaterialUrgency {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProcedureCategory {
+  GENERAL_SURGERY
+  CARDIAC_SURGERY
+  ORTHOPEDIC_SURGERY
+  NEUROSURGERY
+  PLASTIC_SURGERY
+  GYNECOLOGICAL_SURGERY
+  UROLOGICAL_SURGERY
+  OPHTHALMOLOGICAL_SURGERY
+  OTOLARYNGOLOGICAL_SURGERY
+  VASCULAR_SURGERY
+  THORACIC_SURGERY
+  PEDIATRIC_SURGERY
+  EMERGENCY_SURGERY
+  DIAGNOSTIC_PROCEDURE
+  THERAPEUTIC_PROCEDURE
+}
+
+enum ProcedureComplexity {
+  LOW
+  MEDIUM
+  HIGH
+  VERY_HIGH
+  PORTE_1
+  PORTE_2
+  PORTE_3
+  PORTE_4
+  PORTE_ESPECIAL
+}
+
+enum RuleStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+}
+
+enum SurgicalRole {
+  MAIN_SURGEON
+  ASSISTANT_SURGEON
+  ANESTHESIOLOGIST
+  NURSE
+  TECHNICIAN
+  RESIDENT
+}

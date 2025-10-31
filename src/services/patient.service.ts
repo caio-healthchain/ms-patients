@@ -507,6 +507,11 @@ export class PatientService {
       logger.info('Creating patient from XML data', { xmlData });
 
       // Map XML data to patient format
+      // Generate a unique medical record number
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const medicalRecordNumber = `MR${timestamp}${random}`;
+
       const patientData: CreatePatientRequest = {
         firstName: xmlData.nomeBeneficiario?.split(' ')[0] || 'N/A',
         lastName: xmlData.nomeBeneficiario?.split(' ').slice(1).join(' ') || 'N/A',
@@ -520,6 +525,7 @@ export class PatientService {
         insuranceNumber: xmlData.numeroCarteira,
         insurancePlan: xmlData.plano,
         accommodationType: 'STANDARD', // Default for XML import
+        medicalRecordNumber, // Add generated medical record number
       };
 
       // Create patient without validation (XML import)

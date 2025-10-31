@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { PatientController } from '../controllers/patient.controller';
-import { requireRole, requirePermission } from '../middleware/auth';
+import { authMiddleware, requireRole, requirePermission } from '../middleware/auth';
 import { UserRole } from '@/types';
+import { apiKeyMiddleware } from '@/middleware/api-key';
 
 const router = Router();
 const patientController = new PatientController();
@@ -73,6 +74,7 @@ const patientController = new PatientController();
 // Create patient - requires admin, director, or analyst role
 router.post(
   '/',
+  authMiddleware,
   requireRole([UserRole.ADMIN, UserRole.DIRECTOR, UserRole.ANALYST]),
   patientController.createPatient
 );
@@ -107,6 +109,7 @@ router.post(
 // Update patient - requires admin, director, analyst, or doctor role
 router.put(
   '/:id',
+  authMiddleware,
   requireRole([UserRole.ADMIN, UserRole.DIRECTOR, UserRole.ANALYST, UserRole.DOCTOR]),
   patientController.updatePatient
 );
@@ -135,6 +138,7 @@ router.put(
 // Delete patient - requires admin or director role only
 router.delete(
   '/:id',
+  authMiddleware,
   requireRole([UserRole.ADMIN, UserRole.DIRECTOR]),
   patientController.deletePatient
 );
@@ -163,6 +167,7 @@ router.delete(
 // Get patient by ID - all authenticated users can view
 router.get(
   '/:id',
+  authMiddleware,
   patientController.getPatient
 );
 
@@ -190,6 +195,7 @@ router.get(
 // Get patient by CPF - all authenticated users can view
 router.get(
   '/cpf/:cpf',
+  authMiddleware,
   patientController.getPatientByCpf
 );
 
@@ -217,6 +223,7 @@ router.get(
 // Get patient by medical record - all authenticated users can view
 router.get(
   '/medical-record/:medicalRecordNumber',
+  authMiddleware,
   patientController.getPatientByMedicalRecord
 );
 
@@ -253,6 +260,7 @@ router.get(
 // Search patients - all authenticated users can search
 router.get(
   '/',
+  authMiddleware,
   patientController.searchPatients
 );
 
@@ -271,6 +279,7 @@ router.get(
 // Get patient statistics - requires admin, director, or analyst role
 router.get(
   '/statistics',
+  authMiddleware,
   requireRole([UserRole.ADMIN, UserRole.DIRECTOR, UserRole.ANALYST]),
   patientController.getPatientStatistics
 );
@@ -310,13 +319,10 @@ router.get(
 // Validate patient - requires admin, director, or auditor role
 router.patch(
   '/:id/validate',
+  authMiddleware,
   requireRole([UserRole.ADMIN, UserRole.DIRECTOR, UserRole.AUDITOR]),
   patientController.validatePatient
 );
-
-export default router;
-
-
 
 /**
  * @swagger
@@ -340,6 +346,7 @@ export default router;
 // Get patient by insurance number - no auth required for internal services
 router.get(
   '/insurance/:insuranceNumber',
+  apiKeyMiddleware,
   patientController.getPatientByInsuranceNumber
 );
 
@@ -367,6 +374,9 @@ router.get(
 // Create patient from XML - no auth required for internal services
 router.post(
   '/from-xml',
+  apiKeyMiddleware,
   patientController.createPatientFromXml
 );
+
+export default router;
 

@@ -12,6 +12,8 @@ Microsserviço responsável pelo gerenciamento completo de pacientes no sistema 
 - **Eventos Kafka/Service Bus** para integração
 - **APIs REST** com documentação Swagger
 - **Autenticação JWT** e controle de permissões
+- **Autenticação via API Key** para endpoints específicos (guias)
+- **Consulta de Guias (TISS)** via PostgreSQL, incluindo procedimentos vinculados
 - **Logs estruturados** e monitoramento
 - **Deploy Azure** ready
 
@@ -118,6 +120,16 @@ REDIS_TLS=true
 SERVICE_BUS_CONNECTION_STRING=Endpoint=sb://namespace.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=key
 ```
 
+#### Autenticação
+```env
+# JWT
+JWT_SECRET=your-jwt-secret
+JWT_EXPIRES_IN=24h
+
+# API Key (para rotas de guias)
+API_KEY=your-api-key-here
+```
+
 ## 📚 API Documentation
 
 ### Endpoints Principais
@@ -136,6 +148,14 @@ SERVICE_BUS_CONNECTION_STRING=Endpoint=sb://namespace.servicebus.windows.net/;Sh
 - `GET /health` - Health check
 - `GET /health/detailed` - Health check detalhado
 - `GET /api/v1/patients/statistics` - Estatísticas
+
+#### Guias (TISS)
+- `GET /api/v1/guides` - Listar guias (PostgreSQL). Requer API Key.
+- `GET /api/v1/guides/:id` - Obter guia por ID (inclui procedimentos). Requer API Key.
+
+Autenticação para guias:
+- Enviar header: `X-API-Key: <sua_api_key>`
+- Alternativa: `?api_key=<sua_api_key>` como query string
 
 ### Documentação Swagger
 Após iniciar o serviço: http://localhost:3001/api-docs
@@ -156,6 +176,23 @@ Após iniciar o serviço: http://localhost:3001/api-docs
 - **Consultar pacientes**: todos os usuários autenticados
 - **Validar paciente**: admin, director, auditor
 - **Estatísticas**: admin, director, analyst
+
+### Modos de Autenticação
+- **JWT Bearer**: padrão para as rotas de pacientes. Enviar no header `Authorization: Bearer <token>`.
+- **API Key**: para as rotas de guias. Enviar `X-API-Key: <sua_api_key>` ou `?api_key=<sua_api_key>`.
+
+Exemplos (PowerShell/Curl):
+```powershell
+# JWT - gerar token de teste
+node .\gerar-token-jwt.js
+
+# Usar JWT nas rotas de pacientes
+curl -H "Authorization: Bearer <TOKEN>" http://localhost:3001/api/v1/patients
+
+# Usar API Key nas rotas de guias
+curl -H "X-API-Key: <API_KEY>" http://localhost:3001/api/v1/guides
+curl -H "X-API-Key: <API_KEY>" http://localhost:3001/api/v1/guides/123
+```
 
 ## 📊 Monitoramento
 

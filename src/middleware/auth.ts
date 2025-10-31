@@ -14,7 +14,7 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
-        success: false,
+        status: false,
         message: 'Access token is required',
         timestamp: new Date().toISOString(),
       });
@@ -33,7 +33,7 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     
     if (error instanceof jwt.TokenExpiredError) {
       res.status(401).json({
-        success: false,
+        status: false,
         message: 'Token has expired',
         timestamp: new Date().toISOString(),
       });
@@ -42,7 +42,7 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     
     if (error instanceof jwt.JsonWebTokenError) {
       res.status(401).json({
-        success: false,
+        status: false,
         message: 'Invalid token',
         timestamp: new Date().toISOString(),
       });
@@ -50,7 +50,7 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
     }
     
     res.status(500).json({
-      success: false,
+      status: false,
       message: 'Authentication error',
       timestamp: new Date().toISOString(),
     });
@@ -61,7 +61,7 @@ export const requireRole = (roles: UserRole[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
-        success: false,
+        status: false,
         message: 'Authentication required',
         timestamp: new Date().toISOString(),
       });
@@ -70,7 +70,7 @@ export const requireRole = (roles: UserRole[]) => {
 
     if (!roles.includes(req.user.role as UserRole)) {
       res.status(403).json({
-        success: false,
+        status: false,
         message: 'Insufficient permissions',
         timestamp: new Date().toISOString(),
       });
@@ -85,7 +85,7 @@ export const requirePermission = (permission: string) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
-        success: false,
+        status: false,
         message: 'Authentication required',
         timestamp: new Date().toISOString(),
       });
@@ -94,7 +94,7 @@ export const requirePermission = (permission: string) => {
 
     if (!req.user.permissions.includes(permission)) {
       res.status(403).json({
-        success: false,
+        status: false,
         message: `Permission '${permission}' required`,
         timestamp: new Date().toISOString(),
       });
